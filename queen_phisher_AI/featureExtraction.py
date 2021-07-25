@@ -1,14 +1,14 @@
 from bs4 import BeautifulSoup
-import urllib, bs4, re
+import urllib.request, bs4, re
 import googlesearch
 import whois
 from datetime import datetime, timezone
 import time
 import phishtank
 import socket
-
 #if url contains ip addresses instead of name
 def have_ip_address(url):
+    print('starting have ip address')
     match=re.search('(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\/)|'  #IPv4
                     '((0x[0-9a-fA-F]{1,2})\\.(0x[0-9a-fA-F]{1,2})\\.(0x[0-9a-fA-F]{1,2})\\.(0x[0-9a-fA-F]{1,2})\\/)'  #IPv4 in hexadecimal
                     '(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}',url)     #Ipv6
@@ -19,6 +19,7 @@ def have_ip_address(url):
 
 #length of urls
 def url_length(url):
+    print('starting url length')
     if len(url)<54:
         return 1
     elif len(url)>=54|len(url)<=75:
@@ -29,6 +30,7 @@ def url_length(url):
 
 #if url contains shortening services
 def url_shortener(url):
+    print('starting url shortner')
     match=re.search('bit\.ly|goo\.gl|shorte\.st|go2l\.ink|x\.co|ow\.ly|t\.co|tinyurl|tr\.im|is\.gd|cli\.gs|'
                     'yfrog\.com|migre\.me|ff\.im|tiny\.cc|url4\.eu|twit\.ac|su\.pr|twurl\.nl|snipurl\.com|'
                     'short\.to|BudURL\.com|ping\.fm|post\.ly|Just\.as|bkite\.com|snipr\.com|fic\.kr|loopt\.us|'
@@ -43,8 +45,31 @@ def url_shortener(url):
         return 1
 
 
+
+#url having @ symbol
+def have_atrate_symbol(url):
+    print('startin have at rate symbol')
+    match = re.search('@',url)
+
+    if match:
+        return -1
+    else:
+        return 1
+
+
+#double slash redirecting
+def double_slash_redirect(url):
+    print('starting double slash')
+    list = [x.start(0) for x in re.finditer('\\.',url)]
+    if list[len(list)-1]>6:
+        return -1
+    else:
+        return 1
+
+
 #having hyphen in urls
 def prefix_suffix(url):
+    print('startin prefix suffix')
     match = re.search('-',url)
     if match:
         return -1
@@ -52,8 +77,24 @@ def prefix_suffix(url):
         return 1
 
 
+#finding subdomains in a domain
+def have_subdomain(url):
+    print('starting have subdomain')
+    if(have_ip_address(url)==-1):
+        match = re.search('(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5]))|(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}',url)
+        pos = match.end(0)
+        url = url[pos:]
+    list = [x.start(0) for x in re.finditer('\.',url)]
+    if len(list)<=3:
+        return 1
+    elif len(list) == 4:
+        return 0
+    else:
+        return -1
+
 #check wheather contains https  
-def contains_https(url):     
+def contains_https(url):   
+    print('starting contains https')  
     if(regex.search('^https',url)):
         return  1
     else:
@@ -61,6 +102,7 @@ def contains_https(url):
 
 
 def SSLfinal_State(url):
+    print('starting ssl final state')
     try:
 #check wheather contains https       
         if(regex.search('^https',url)):
@@ -104,10 +146,26 @@ def SSLfinal_State(url):
         return 1    
 
 
+#website has favicon
+
+def favicon(wiki,soup,domain):
+    print('favicon')
+    for head in soup.find_all('link'):
+        for head.link in soup.find_all('link',href=True):
+            dots = [x.start(0) for x in re.finditer('\.', head.link['href'])]
+            if wiki in head.link['href'] or len(dots) == 1 or domain in head.link['href']:
+                return 1
+            else:
+                return -1
+    return 1
+
+
+
 #Checking Ports
 status_port = []
 
 def isOpen(url,port_numbers):
+    print('port is open')
     for port in port_numbers:
         ip = socket.gethostbyname(url)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -125,6 +183,7 @@ def isOpen(url,port_numbers):
 
 #http tokens
 def https_token(url):
+    print('http tokens')
     match = [(x.start(0), x.end(0)) for x in re.finditer('https:// | http:// | http | https', url)]
 
     if len(match)!= 1:
@@ -133,8 +192,53 @@ def https_token(url):
         return 1
 
 
+
+
+#Request URLs
+def request_url(wiki, soup, domain):
+    print('request url')
+    i = 0
+    success = 0
+    for img in soup.find_all('img',src=True):
+        dots = [x.start(0) for x in re.finditer('\.',img['src'])]
+        if wiki in img['src'] or domain in img['src'] or len(dots)==1:
+         success = success + 1
+        i=i+1
+
+    for audio in soup.find_all('audio', src= True):
+      dots = [x.start(0) for x in re.finditer('\.', audio['src'])]
+      if wiki in audio['src'] or domain in audio['src'] or len(dots)==1:
+         success = success + 1
+      i=i+1
+
+    for embed in soup.find_all('embed', src= True):
+      dots=[x.start(0) for x in re.finditer('\.',embed['src'])]
+      if wiki in embed['src'] or domain in embed['src'] or len(dots)==1:
+         success = success + 1
+      i=i+1
+
+    for iframe in soup.find_all('iframe', src= True):
+      dots=[x.start(0) for x in re.finditer('\.',iframe['src'])]
+      if wiki in iframe['src'] or domain in iframe['src'] or len(dots)==1:
+         success = success + 1
+      i=i+1
+
+    try:
+       percentage = success/float(i) * 100
+    except:
+        return 1
+
+    if percentage < 22.0 :
+       return 1
+    elif((percentage >= 22.0) and (percentage < 61.0)) :
+       return 0
+    else :
+       return -1
+
+
 #url anchor tags
 def url_of_anchor(wiki, soup, domain):
+    print('url of anchor')
     i = 0
     unsafe=0
     for a in soup.find_all('a', href=True):
@@ -155,59 +259,63 @@ def url_of_anchor(wiki, soup, domain):
 
 # Links in <Script> and <Link> tags
 def links_in_tags(wiki, soup, domain):
-   i=0
-   success =0
-   for link in soup.find_all('link', href= True):
-      dots=[x.start(0) for x in re.finditer('\.',link['href'])]
-      if wiki in link['href'] or domain in link['href'] or len(dots)==1:
-         success = success + 1
-      i=i+1
+    print('links in tags')
+    i=0
+    success =0
+    for link in soup.find_all('link', href= True):
+        dots=[x.start(0) for x in re.finditer('\.',link['href'])]
+        if wiki in link['href'] or domain in link['href'] or len(dots)==1:
+            success = success + 1
+        i=i+1
 
-   for script in soup.find_all('script', src= True):
-      dots=[x.start(0) for x in re.finditer('\.',script['src'])]
-      if wiki in script['src'] or domain in script['src'] or len(dots)==1 :
-         success = success + 1
-      i=i+1
-   try:
-       percentage = success / float(i) * 100
-   except:
-       return 1
+    for script in soup.find_all('script', src= True):
+        dots=[x.start(0) for x in re.finditer('\.',script['src'])]
+        if wiki in script['src'] or domain in script['src'] or len(dots)==1 :
+            success = success + 1
+        i=i+1
+    try:
+        percentage = success / float(i) * 100
+    except:
+        return 1
 
-   if percentage < 17.0 :
-      return 1
-   elif((percentage >= 17.0) and (percentage < 81.0)) :
-      return 0
-   else :
-      return -1
+    if percentage < 17.0 :
+        return 1
+    elif((percentage >= 17.0) and (percentage < 81.0)) :
+        return 0
+    else :
+        return -1
 
 
 # Server Form Handler (SFH)
 ###### Have written conditions directly from word file..as there are no sites to test ######
 def sfh(wiki, soup, domain):
-   for form in soup.find_all('form', action= True):
+    print('server from handler')
+    for form in soup.find_all('form', action= True):
       if form['action'] =="" or form['action'] == "about:blank" :
          return -1
       elif wiki not in form['action'] and domain not in form['action']:
           return 0
       else:
             return 1
-   return 1
+    return 1
 
 
 #Mail Function
 ###### PHP mail() function is difficult to retreive, hence the following function is based on mailto ######
 def submitting_to_email(soup):
-   for form in soup.find_all('form', action= True):
-      if "mailto:" in form['action'] :
-         return -1
-      else:
-          return 1
-   return 1
+    print('submit to email')
+    for form in soup.find_all('form', action= True):
+        if "mailto:" in form['action'] :
+            return -1
+        else:
+            return 1
+    return 1
 
 
 #IFrame Redirection
 ###### Checking remaining on some site######
 def iframe(soup):
+    print('i frame redirection')
     for iframe in soup.find_all('iframe', width=True, height=True, frameBorder=True):
         if iframe['width']=="0" and iframe['height']=="0" and iframe['frameBorder']=="0":
             return -1
@@ -218,6 +326,7 @@ def iframe(soup):
 
 #Age of Domain
 def age_of_domain(domain):
+    print('age of domain')
     # creation_date = domain.creation_date
     # expiration_date = domain.expiration_date
     # ageofdomain = abs((expiration_date - creation_date).days)
@@ -241,6 +350,7 @@ def age_of_domain(domain):
 
 #Traffic on website using Alexa
 def web_traffic(url):
+    print('web traffic')
     try:
         rank = bs4.BeautifulSoup(urllib.request("http://data.alexa.com/data?cli=10&dat=s&url=" + url).read(), "xml").find("REACH")['RANK']
     except TypeError:
@@ -254,6 +364,7 @@ def web_traffic(url):
 
 #Google Index
 def google_index(url):
+    print('google index')
     site=googlesearch.search(url, 5)
     if site:
         return 1
@@ -262,6 +373,7 @@ def google_index(url):
 
 
 def statistical_report(url,hostname):
+    print('statistical report')
     url_match=re.search('esy\.es | hol\.es | 	000webhostapp\.com | 16mb\.com | bit\.ly | for-our\.info | beget\.tech | blogspot\.com | weebly\.com |raymannag\.ch',url)
     try:
         ip_address=socket.gethostbyname(hostname)
@@ -320,7 +432,7 @@ def main(url):
     status.append(favicon(url,soup, hostname))
 
     port_numbers = [21,22,23, 80,443]
-    status.append(isOpen(hostname,port_numbers))
+    # status.append(isOpen(hostname,port_numbers))
     status.append(https_token(url))
     status.append(request_url(url, soup, hostname))
     status.append(url_of_anchor(url, soup, hostname))
