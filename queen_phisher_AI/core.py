@@ -71,8 +71,8 @@ def predict_phishing(url):
     features_test=featureExtraction.main(url)
     print(features_test)
 
-    pred=logmodel.predict([X.iloc[6]])
-    #pred=logmodel.predict([features_test])
+    # pred=logmodel.predict([X.iloc[6]])
+    pred=logmodel.predict([features_test])
     print(pred)
     if pred:
         print ("This is a safe website.")
