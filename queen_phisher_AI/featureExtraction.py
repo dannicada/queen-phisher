@@ -400,11 +400,11 @@ def web_traffic(url):
         global_rank = soup.select('p.big.data') # select any p tag with big and data class
         global_rank = str(global_rank[0])
         res = re.findall(r"([0-9,]{1,12})", global_rank) # find rank
+        res =int(res[0])
         print('printing the rank:', res)
-        res =str(res[0])
     except TypeError:
         return -1
-    if (res<100000):
+    if (res < 100000):
         return 1 
     else:
         return 0
