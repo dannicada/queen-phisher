@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 import time
 import phishtank
 import socket
+import requests
+
 #if url contains ip addresses instead of name
 def have_ip_address(url):
     print('starting have ip address')
@@ -91,6 +93,31 @@ def have_subdomain(url):
         return 0
     else:
         return -1
+
+#Domain_registration_length
+def domain_registration_length(domain):
+
+    # expiry_date = domain.expiration_date
+    # today = time.strftime("%Y-%m-%d")
+    # today_date = datetime.datetime.strptime(today,"%Y-%m-%d")
+    # registration_length = abs((expiry_date - today_date).days)
+
+    # if registration_length / 365 <= 1:
+    #     return -1
+    # else:
+    #     return 1
+    expiry_date = domain.expiration_date
+    exp = datetime.strftime(expiry_date,"%Y-%m-%d")
+    expires = datetime.strptime(exp,"%Y-%m-%d")
+    today = datetime.today()
+    tp = datetime.strftime(today,"%Y-%m-%d")
+    today_date = datetime.strptime(tp,"%Y-%m-%d")
+    registration_length = abs((expires - today_date).days)
+
+    if registration_length / 365 <= 1:
+    	return -1
+    else:
+    	return 1
 
 #check wheather contains https  
 def contains_https(url):   
@@ -349,15 +376,36 @@ def age_of_domain(domain):
 
 
 #Traffic on website using Alexa
+# def web_traffic(url):
+#     print('web traffic')
+#     print('the url for web traffic is:', url)
+#     try:
+#         rank = bs4.BeautifulSoup(urllib.request("http://data.alexa.com/data?cli=10&dat=s&url=" + url).read(), "xml").find("REACH")['RANK']
+#     except TypeError:
+#         return -1
+#     rank= int(rank)
+#     if (rank<100000):
+#         return 1
+#     else:
+#         return 0
+
+
 def web_traffic(url):
-    print('web traffic')
     try:
-        rank = bs4.BeautifulSoup(urllib.request("http://data.alexa.com/data?cli=10&dat=s&url=" + url).read(), "xml").find("REACH")['RANK']
+        url = "https://www.alexa.com/siteinfo/" + url
+        respone = requests.get(url) # get information from page
+        soup = BeautifulSoup(respone.content,'html.parser')  
+        for match in soup.find_all('span'): #remove all span tag
+            match.unwrap()
+        global_rank = soup.select('p.big.data') # select any p tag with big and data class
+        global_rank = str(global_rank[0])
+        res = re.findall(r"([0-9,]{1,12})", global_rank) # find rank
+        print('printing the rank:', res)
+        res =str(res[0])
     except TypeError:
         return -1
-    rank= int(rank)
-    if (rank<100000):
-        return 1
+    if (res<100000):
+        return 1 
     else:
         return 0
 
@@ -391,10 +439,11 @@ def statistical_report(url,hostname):
 
 
 def main(url):
-    with open('markup.txt', 'r', encoding='utf-8') as file:
-        soup_string=file.read()
+    content = requests.get(url)
+    # with open('markup.txt', 'r', encoding='utf-8') as file:
+    #     soup_string=file.read()
 
-    soup = BeautifulSoup(soup_string, 'html.parser')
+    soup = BeautifulSoup(content.text, 'html.parser')
 
     status=[]
 
@@ -455,7 +504,7 @@ def main(url):
 
     status.append(dns)
 
-    status.append(web_traffic(soup))
+    status.append(web_traffic(url))
     status.append(google_index(url))
     status.append(statistical_report(url,hostname))
 

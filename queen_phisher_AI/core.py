@@ -16,7 +16,6 @@ def predict_phishing(url):
     print(url)
 
     df = pd.read_csv(BASE_DIR / 'Training Dataset.csv', header =0)
-
     #df.isnull().values.any()
 
     def categorical_to_numeric(x):
@@ -26,8 +25,11 @@ def predict_phishing(url):
             return 1
     df['Result'] = df['Result'].apply(categorical_to_numeric)
 
+
     X=df.iloc[:,:30]
+    print('printing x:', X)
     y=df.iloc[:,-1:]
+    print('printing y', y)
 
     #dropped the following columns since they had lower ranking (RFE)
     """from sklearn.model_selection import train_test_split
@@ -43,9 +45,13 @@ def predict_phishing(url):
     print(rfe.support_)
     print(rfe.ranking_)
     """
+    print('printing the main df:', df)
 
-    X = df.drop(df.columns[[1,4,8,12,17,19,20,21,23,26,30]], axis=1) 
-    print(X)
+    # X = df.drop(df.columns[[1,4,8,12,17,19,20,21,23,26,30]], axis=1) 
+    X = X.drop(df.columns[[8,11,19,20,21,22,27,29]], axis=1) 
+
+    print('printing another x', X)
+
 
     from sklearn.model_selection import train_test_split
     X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.30,random_state=101)
@@ -69,7 +75,6 @@ def predict_phishing(url):
 
 
     features_test=featureExtraction.main(url)
-    print(features_test)
 
     # pred=logmodel.predict([X.iloc[6]])
     pred=logmodel.predict([features_test])
