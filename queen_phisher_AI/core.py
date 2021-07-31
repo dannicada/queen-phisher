@@ -48,7 +48,7 @@ def predict_phishing(url):
     print('printing the main df:', df)
 
     # X = df.drop(df.columns[[1,4,8,12,17,19,20,21,23,26,30]], axis=1) 
-    X = X.drop(df.columns[[8,11,19,20,21,22,27,29]], axis=1) 
+    X = X.drop(df.columns[[11,19,20,21,22,27,29]], axis=1) 
 
     print('printing another x', X)
 
@@ -74,14 +74,14 @@ def predict_phishing(url):
 
 
 
-    features_test=featureExtraction.main(url)
+    features_set=featureExtraction.main(url)
 
     # pred=logmodel.predict([X.iloc[6]])
-    pred=logmodel.predict([features_test])
+    pred=logmodel.predict([features_set])
     print(pred)
     if pred:
         print ("This is a safe website.")
     else:
         print ("This is a phishing website..!")
     
-    return pred
+    return pred, features_set

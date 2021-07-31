@@ -20,9 +20,9 @@ class PredictPhishingUrl(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             url = serializer.data.get('url')
-            prediction = predict_phishing(url)
+            prediction, features_set = predict_phishing(url)
             return Response(
-                {'is_phishing': bool(not prediction)},
+                {'is_phishing': bool(not prediction), 'features_set': features_set},
                 status=status.HTTP_200_OK,
             )
         return Response(

@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-import urllib.request, bs4, re
+import urllib.request, re
 import googlesearch
 import whois
 from datetime import datetime, timezone
@@ -61,9 +61,11 @@ def have_atrate_symbol(url):
 
 #double slash redirecting
 def double_slash_redirect(url):
-    print('starting double slash')
-    list = [x.start(0) for x in re.finditer('\\.',url)]
-    if list[len(list)-1]>6:
+    print('starting double slash redirect')
+    list = [x.start(0) for x in re.finditer('\\//',url)]
+    print(list)
+    print(list[len(list) -1])
+    if list[len(list)-1]>7:
         return -1
     else:
         return 1
@@ -107,6 +109,7 @@ def domain_registration_length(domain):
     # else:
     #     return 1
     expiry_date = domain.expiration_date
+    print('\n\nprintin expiry data\n\n', expiry_date)
     exp = datetime.strftime(expiry_date,"%Y-%m-%d")
     expires = datetime.strptime(exp,"%Y-%m-%d")
     today = datetime.today()
@@ -128,7 +131,7 @@ def contains_https(url):
         usehttps = -1
 
 
-def SSLfinal_State(url):
+def sslfinal_state(url):
     print('starting ssl final state')
     try:
 #check wheather contains https       
@@ -363,6 +366,7 @@ def age_of_domain(domain):
     #     return 1
     creation_date = domain.creation_date
     expiration_date = domain.expiration_date
+    print('\n\n\n printing creation and expiration \n\n', creation_date, expiration_date)
     create = datetime.strftime(creation_date,"%Y-%m-%d")
     create_date = datetime.strptime(create,"%Y-%m-%d")
     exp = datetime.strftime(expiration_date,"%Y-%m-%d")
@@ -374,20 +378,6 @@ def age_of_domain(domain):
     else:
     	return 1
 
-
-#Traffic on website using Alexa
-# def web_traffic(url):
-#     print('web traffic')
-#     print('the url for web traffic is:', url)
-#     try:
-#         rank = bs4.BeautifulSoup(urllib.request("http://data.alexa.com/data?cli=10&dat=s&url=" + url).read(), "xml").find("REACH")['RANK']
-#     except TypeError:
-#         return -1
-#     rank= int(rank)
-#     if (rank<100000):
-#         return 1
-#     else:
-#         return 0
 
 
 def web_traffic(url):
@@ -402,7 +392,7 @@ def web_traffic(url):
         res = re.findall(r"([0-9,]{1,12})", global_rank) # find rank
         res =int(res[0])
         print('printing the rank:', res)
-    except TypeError:
+    except:
         return -1
     if (res < 100000):
         return 1 
@@ -439,10 +429,11 @@ def statistical_report(url,hostname):
 
 
 def main(url):
+    print('starting the content request')
     content = requests.get(url)
     # with open('markup.txt', 'r', encoding='utf-8') as file:
     #     soup_string=file.read()
-
+    print('starting the soup formation')
     soup = BeautifulSoup(content.text, 'html.parser')
 
     status=[]
@@ -465,11 +456,13 @@ def main(url):
     status.append(double_slash_redirect(url))
     status.append(prefix_suffix(hostname))
     status.append(have_subdomain(url))
-    # status.append(sslfinal_state(url))
+    status.append(sslfinal_state(url))
 
     dns=1
     try:
+        print('\n\nabout to print domain\n\n')
         domain = whois.query(hostname)
+        print('\n\n\printing domain\n\n',domain)
     except:
         dns=-1
 
